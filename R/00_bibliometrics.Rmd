@@ -1,6 +1,6 @@
 ---
-title: 'Advanced Network Analysis: Bipartite (2-mode) netwpoks: Application (R)'
-author: "Daniel S. Hain (dsh@business.aau.dk)"
+title: 'Innovation and Development: Bibliometrics Analysis'
+author: "Marija Rakas (rakas@business.aau.dk)"
 date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
 output:
   html_notebook:
@@ -41,7 +41,68 @@ library(bibliometrix)
 hello, test
 
 ```{r}
+file <- "../../data/scopus.csv"
 
+M <- convert2df(file, dbsource = "scopus", format = "csv")
 ```
 
+```{r}
+glimpse(M)
+```
+```{r}
+results <-biblioAnalysis(M, sep=";")
+```
+
+
+```{r}
+options(width=100)
+S <- summary(object = results, k = 20, pause = FALSE)
+```
+
+```{r}
+plot(x = results, k = 10, pause = FALSE)
+```
+```{r}
+CR <- citations(M, field = "article", sep = ";")
+cbind(CR$Cited[1:10])
+```
+```{r}
+CR <- citations(M, field = "author", sep = ";")
+cbind(CR$Cited[1:10])
+```
+
+```{r}
+CR <- localCitations(M, sep = ";")
+CR$Authors[1:10,]
+CR$Papers[1:10,]
+```
+
+```{r}
+topAU <- authorProdOverTime(M, k = 10, graph = TRUE)
+```
+```{r, fig.width=10}
+M %>% threeFieldsPlot()
+```
+```{r}
+# Create a country collaboration network
+
+M <- metaTagExtraction(M, Field = "AU_CO", sep = ";")
+NetMatrix <- biblioNetwork(M, analysis = "collaboration", network = "countries", sep = ";", n = 20)
+
+# Plot the network
+net=networkPlot(NetMatrix, n = dim(NetMatrix)[1], Title = "Country Collaboration", type = "circle", size=TRUE, remove.multiple=FALSE,labelsize=0.7,cluster="none")
+```
+```{r}
+# Create keyword co-occurrences network
+
+NetMatrix <- biblioNetwork(M, analysis = "co-occurrences", network = "keywords", sep = ";")
+
+# Plot the network
+net=networkPlot(NetMatrix, normalize="association", weighted=T, n = 30, Title = "Keyword Co-occurrences", type = "fruchterman", size=T,edgesize = 5,labelsize=0.7)
+```
+```{r}
+# Conceptual Structure using keywords (method="CA")
+
+CS <- conceptualStructure(M,field="ID", method="CA", minDegree=4, clust=5, stemming=FALSE, labelsize=10, documents=2)
+```
 
