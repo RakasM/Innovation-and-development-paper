@@ -32,5 +32,16 @@ knitr::opts_chunk$set(warning=FALSE,
 ### Load standardpackages
 library(tidyverse) # Collection of all the good stuff like dplyr, ggplot2 ect.
 library(magrittr) # For extra-piping operators (eg. %<>%)
+
+library(bibliometrix)
 ```
+
+# Intro
+
+hello, test
+
+```{r}
+
+```
+
 
