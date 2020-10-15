@@ -4,7 +4,7 @@ author: "Marija Rakas (rakas@business.aau.dk)"
 date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
 output:
   html_notebook:
-    code_folding: show
+    code_folding: hide
     df_print: paged
     toc: true
     toc_depth: 2
@@ -40,28 +40,67 @@ library(bibliometrix)
 
 hello, test
 
-```{r}
-file <- "../../data/scopus.csv"
 
-M <- convert2df(file, dbsource = "scopus", format = "csv")
+```{r}
+file_scopus <- "../../data/scopus.csv"
+file_wos <- c("../../data/wos1.txt","../../data/wos2.txt" )
+
+M_scopus <- convert2df(file_scopus, dbsource = "scopus", format = "csv")
+M_wos <- convert2df(file_wos, dbsource = "wos", format = "plaintext")
+
 ```
 
 ```{r}
-glimpse(M)
-```
-```{r}
-results <-biblioAnalysis(M, sep=";")
+glimpse(M_scopus)
+glimpse(M_wos)
+
 ```
 
+
+# Basic results{.tabset}
+
+## Results Scopus
+```{r}
+results_scopus <-biblioAnalysis(M_scopus, sep=";")
+```
+
+
+```{r}
+S_scopus <- summary(object = results_scopus, k = , pause = FALSE)
+```
+
+```{r}
+plot(x = results_scopus, k = 10, pause = FALSE)
+```
+
+## Results WoS
+
+```{r}
+M_wos <- M_wos %>%
+  filter(PY <= 2019) %>%
+  as.data.frame()
+
+# M_wos <- M_wos[M_wos[,"PY"] <= 2019,]
+```
+
+
+```{r}
+results_wos <-biblioAnalysis(M_wos, sep=";")
+```
 
 ```{r}
 options(width=100)
-S <- summary(object = results, k = 20, pause = FALSE)
+S_wos <- summary(object = results_wos, k = 10, pause = FALSE)
 ```
 
 ```{r}
-plot(x = results, k = 10, pause = FALSE)
+plot(x = results_wos, k = 10, pause = FALSE)
 ```
+
+
+# Cited References{.tabset}
+
+
 ```{r}
 CR <- citations(M, field = "article", sep = ";")
 cbind(CR$Cited[1:10])
@@ -100,6 +139,8 @@ NetMatrix <- biblioNetwork(M, analysis = "co-occurrences", network = "keywords",
 # Plot the network
 net=networkPlot(NetMatrix, normalize="association", weighted=T, n = 30, Title = "Keyword Co-occurrences", type = "fruchterman", size=T,edgesize = 5,labelsize=0.7)
 ```
+
+
 ```{r}
 # Conceptual Structure using keywords (method="CA")
 
