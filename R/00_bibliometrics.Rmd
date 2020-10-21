@@ -32,51 +32,90 @@ knitr::opts_chunk$set(warning=FALSE,
 ### Load standardpackages
 library(tidyverse) # Collection of all the good stuff like dplyr, ggplot2 ect.
 library(magrittr) # For extra-piping operators (eg. %<>%)
-
 library(bibliometrix)
+library(kableExtra)
 ```
 
 # Intro
 
 hello, test
 
+## Corpus Creation
+1. Scopus download of documents retrieved from search strings from Lorentzen (2010). Limited to `LANGUAGE = ENGLISH AND TYPE = (ARTICLE) AND SRCTYPE=(JOURNAL)`. Scopus1 is created from searching all Scopus's subject areas, and applying additional filtering on the resulting set of 6933 publications. Namely,I performed second filtering based on search string 'product OR process OR organisational innovation or institution*. This type of criteria is applied manually in Lorentzen (2010). Scopus2 and Scopus3 are generated without second filtering. Scopus2 is limited to social science subject areas, whereas Scopus3 is limited to social science subject areas, excluding Art&Humanities and Psychology. 
+2. WoS download of documents retrieved from search string from Lorentzen (2010). Limited to `LANGUAGE = ENGLISH AND TYPE = (ARTICLE) AND SRCTYPE=(JOURNAL)`. For wos1 same limitations as in Scopus1.That lead to initial 5142 publications. Wos2 is limited to Social Sciences Citation Index (SSCI) --1956-present, and no second filtering is applied.  
+
+That leads to following corpus sizes:
 
 ```{r}
-file_scopus <- "../../data/scopus.csv"
-file_wos <- c("../../data/wos1.txt","../../data/wos2.txt" )
 
-M_scopus <- convert2df(file_scopus, dbsource = "scopus", format = "csv")
-M_wos <- convert2df(file_wos, dbsource = "wos", format = "plaintext")
+file_scopus1<- "../../data/scopus1.csv"
+file_scopus2<-c("../../data/scopus21.csv", "../../data/scopus22.csv", "../../data/scopus23.csv")
+file_scopus3<-c("../../data/scopus31.csv", "../../data/scopus32.csv", "../../data/scopus33.csv")
+
+file_wos1 <- c("../../data/wos11.txt","../../data/wos12.txt" )
+file_wos2 <- c("../../data/wos21.txt","../../data/wos22.txt","../../data/wos23.txt", "../../data/wos24.txt","../../data/wos25.txt","../../data/wos26.txt", "../../data/wos27.txt")
+
+M_scopus1 <- convert2df(file_scopus1, dbsource = "scopus", format = "csv")
+M_scopus2 <- convert2df(file_scopus2, dbsource = "scopus", format = "csv")
+M_scopus3 <- convert2df(file_scopus3, dbsource = "scopus", format = "csv")
+
+M_wos1 <- convert2df(file_wos1, dbsource = "wos", format = "plaintext")
+M_wos2 <- convert2df(file_wos2, dbsource = "wos", format = "plaintext")
+```
+
+
+```{r}
+
+cat("Number of publications in scopus1: ", nrow(M_scopus1))
+cat("Number of publications in scopus2: ", nrow(M_scopus2)) 
+cat("Number of publications in scopus3: ", nrow(M_scopus3))
+cat("Number of publications in wos1: ", nrow(M_wos1))
+cat("Number of publications in wos2: ", nrow(M_wos2))
+
+```
+
+
+```{r}
+#glimpse(M_scopus1)
+#glimpse(M_scopus2)
+#glimpse(M_scopus3)
+#glimpse(M_wos1)
+#glimpse(M_wos2)
+
+```
+
+
+
+# General overview of the documents in the corpus:Authors, Publications, countries, sources, and keywords {.tabset}
+
+## Overview Scopus1
+```{r}
+results_scopus1 <-biblioAnalysis(M_scopus1, sep=";")
+S_scopus1 <-  summary(object = results_scopus1, k =10 , pause = FALSE)
 
 ```
 
 ```{r}
-glimpse(M_scopus)
-glimpse(M_wos)
+plot(x = results_scopus1, k = 10, pause = FALSE)
 
 ```
 
-
-# Basic results{.tabset}
-
-## Results Scopus
-```{r}
-results_scopus <-biblioAnalysis(M_scopus, sep=";")
-```
-
+## Overview Scopus3
 
 ```{r}
-S_scopus <- summary(object = results_scopus, k = , pause = FALSE)
+results_scopus3 <-biblioAnalysis(M_scopus3, sep=";")
+S_scopus3 <- summary(object = results_scopus3, k =10 , pause = FALSE)
 ```
 
 ```{r}
-plot(x = results_scopus, k = 10, pause = FALSE)
+plot(x = results_scopus3, k = 10, pause = FALSE)
 ```
 
-## Results WoS
+
+## Overview WoS1
 
 ```{r}
-M_wos <- M_wos %>%
+M_wos1 <- M_wos1 %>%
   filter(PY <= 2019) %>%
   as.data.frame()
 
@@ -85,65 +124,269 @@ M_wos <- M_wos %>%
 
 
 ```{r}
-results_wos <-biblioAnalysis(M_wos, sep=";")
-```
+results_wos1<-biblioAnalysis(M_wos1, sep=";")
 
-```{r}
 options(width=100)
-S_wos <- summary(object = results_wos, k = 10, pause = FALSE)
+S_wos1 <- summary(object = results_wos1, k = 10, pause = FALSE)
+
 ```
 
 ```{r}
-plot(x = results_wos, k = 10, pause = FALSE)
+plot(x = results_wos1, k = 10, pause = FALSE)
+```
+
+## Overview WoS2
+
+```{r}
+M_wos2 <- M_wos2 %>%
+  filter(PY <= 2019) %>%
+  as.data.frame()
+```
+
+```{r}
+results_wos2<-biblioAnalysis(M_wos2, sep=";")
+options(width=100)
+S_wos2 <- summary(object = results_wos2, k = 10, pause = FALSE)
+```
+
+```{r}
+plot(x = results_wos2, k = 10, pause = FALSE)
 ```
 
 
 # Cited References{.tabset}
 
+## Scopus1
 
 ```{r}
-CR <- citations(M, field = "article", sep = ";")
-cbind(CR$Cited[1:10])
-```
-```{r}
-CR <- citations(M, field = "author", sep = ";")
-cbind(CR$Cited[1:10])
+CR_scopus1 <- citations(M_scopus1, field = "article", sep = ";")
+#cbind(CR_scopus1$Cited[1:10])
 ```
 
 ```{r}
-CR <- localCitations(M, sep = ";")
-CR$Authors[1:10,]
-CR$Papers[1:10,]
+CR_scopus1$Cited %>% as_tibble() %>% head(20) %>% 
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), font_size = 8)
+```
+
+
+```{r}
+CR_scopus1 <- citations(M_scopus1, field = "author", sep = ";")
+cbind(CR_scopus1$Cited[1:10])
+
 ```
 
 ```{r}
-topAU <- authorProdOverTime(M, k = 10, graph = TRUE)
+CR_scopus1 <- localCitations(M_scopus1, sep = ";")
+CR_scopus1$Authors[1:10,]
+CR_scopus1$Papers[1:10,]
+
 ```
+
+
+
+## Scopus3
+
+```{r}
+CR_scopus3<- citations(M_scopus3, field = "article", sep = ";")
+#cbind(CR_scopus3$Cited[1:10])
+```
+
+```{r}
+CR_scopus3$Cited %>% as_tibble() %>% head(20) %>% 
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), font_size = 8)
+```
+
+```{r}
+CR_scopus3 <- citations(M_scopus3, field = "author", sep = ";")
+cbind(CR_scopus3$Cited[1:10])
+```
+
+```{r}
+CR_scopus3 <- localCitations(M_scopus3, sep = ";")
+CR_scopus3$Authors[1:10,]
+CR_scopus3$Papers[1:10,]
+```
+
+
+
+## WoS1
+
+```{r}
+CR_wos1 <- citations(M_wos1, field = "article", sep = ";")
+#cbind(CR_wos$Cited[1:10])
+
+```
+
+```{r}
+CR_wos1$Cited %>% as_tibble() %>% head(20) %>% 
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), font_size = 8)
+```
+
+
+```{r}
+CR_wos1 <- citations(M_wos1, field = "author", sep = ";")
+cbind(CR_wos1$Cited[1:10])
+
+```
+
+```{r}
+CR_wos1 <- localCitations(M_wos1, sep = ";")
+CR_wos1$Authors[1:10,]
+CR_wos1$Papers[1:10,]
+
+```
+
+## WoS2
+
+```{r}
+CR_wos2 <- citations(M_wos2, field = "article", sep = ";")
+#cbind(CR_wos2$Cited[1:10])
+
+```
+
+
+```{r}
+CR_wos2$Cited %>% as_tibble() %>% head(20) %>% 
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), font_size = 8)
+```
+
+
+```{r}
+CR_wos2 <- citations(M_wos2, field = "author", sep = ";")
+cbind(CR_wos2$Cited[1:10])
+
+```
+
+```{r}
+
+CR_wos2 <- localCitations(M_wos2, sep = ";")
+CR_wos2$Authors[1:10,]
+CR_wos2$Papers[1:10,]
+
+```
+
+
+# Authors, Themes & Journals {.tabset}
+
+## Scopus1
+
 ```{r, fig.width=10}
-M %>% threeFieldsPlot()
-```
-```{r}
-# Create a country collaboration network
-
-M <- metaTagExtraction(M, Field = "AU_CO", sep = ";")
-NetMatrix <- biblioNetwork(M, analysis = "collaboration", network = "countries", sep = ";", n = 20)
-
-# Plot the network
-net=networkPlot(NetMatrix, n = dim(NetMatrix)[1], Title = "Country Collaboration", type = "circle", size=TRUE, remove.multiple=FALSE,labelsize=0.7,cluster="none")
-```
-```{r}
-# Create keyword co-occurrences network
-
-NetMatrix <- biblioNetwork(M, analysis = "co-occurrences", network = "keywords", sep = ";")
-
-# Plot the network
-net=networkPlot(NetMatrix, normalize="association", weighted=T, n = 30, Title = "Keyword Co-occurrences", type = "fruchterman", size=T,edgesize = 5,labelsize=0.7)
+M_scopus1 %>% threeFieldsPlot()
 ```
 
+## Scopus3
+
+```{r, fig.width=10}
+M_scopus3 %>% threeFieldsPlot()
+```
+
+## Wos1
 
 ```{r}
-# Conceptual Structure using keywords (method="CA")
+fig.width=10
+M_wos1 %>% threeFieldsPlot()
 
-CS <- conceptualStructure(M,field="ID", method="CA", minDegree=4, clust=5, stemming=FALSE, labelsize=10, documents=2)
 ```
+
+## Wos2
+
+```{r}
+fig.width=10
+M_wos2 %>% threeFieldsPlot()
+
+```
+
+# Create keyword co-occurrences network & plot the network{.tabset}
+
+## Scopus1
+
+```{r}
+
+NetMatrix_scopus1 <- biblioNetwork(M_scopus1, analysis = "co-occurrences", network = "keywords", sep = ";")
+
+net_scopus1=networkPlot(NetMatrix_scopus1, normalize="association", weighted=T, n = 30, Title = "Keyword Co-occurrences", type = "fruchterman", size=T,edgesize = 5,labelsize=0.7)
+
+```
+
+## Scopus3
+
+```{r}
+
+NetMatrix_scopus3 <- biblioNetwork(M_scopus3, analysis = "co-occurrences", network = "keywords", sep = ";")
+
+net_scopus3=networkPlot(NetMatrix_scopus3, normalize="association", weighted=T, n = 30, Title = "Keyword Co-occurrences", type = "fruchterman", size=T,edgesize = 5,labelsize=0.7)
+
+```
+
+
+## Wos1
+
+```{r}
+NetMatrix_wos1 <- biblioNetwork(M_wos1, analysis = "co-occurrences", network = "keywords", sep = ";")
+
+net_wos1=networkPlot(NetMatrix_wos1, normalize="association", weighted=T, n = 30, Title = "Keyword Co-occurrences", type = "fruchterman", size=T,edgesize = 5,labelsize=0.7)
+
+```
+
+## Wos2
+
+```{r}
+
+NetMatrix_wos2 <- biblioNetwork(M_wos2, analysis = "co-occurrences", network = "keywords", sep = ";")
+
+net_wos2=networkPlot(NetMatrix_wos2, normalize="association", weighted=T, n = 30, Title = "Keyword Co-occurrences", type = "fruchterman", size=T,edgesize = 5,labelsize=0.7)
+
+```
+
+# Thematic map based on co-word network analysis and clustering{.tabset}
+
+## Scopus1
+
+```{r}
+
+Map_scopus1=thematicMap(M_scopus1, field = "ID", n = 250, minfreq = 5,
+  stemming = FALSE, size = 0.5, n.labels=3, repel = TRUE)
+plot(Map_scopus1$map)
+
+```
+
+## Scopus3
+
+```{r}
+Map_scopus3=thematicMap(M_scopus3, field = "ID", n = 250, minfreq = 5,
+  stemming = FALSE, size = 0.5, n.labels=3, repel = TRUE)
+plot(Map_scopus3$map)
+
+```
+
+## WoS1
+
+```{r}
+Map_wos1=thematicMap(M_wos1, field = "ID", n = 250, minfreq = 5,
+  stemming = FALSE, size = 0.5, n.labels=3, repel = TRUE)
+plot(Map_wos1$map)
+
+```
+
+## WoS2
+
+```{r}
+
+Map_wos2=thematicMap(M_wos2, field = "ID", n = 250, minfreq = 5,
+  stemming = FALSE, size = 0.5, n.labels=3, repel = TRUE)
+plot(Map_wos2$map)
+
+```
+
+
+
+
+
+
+
+
 
