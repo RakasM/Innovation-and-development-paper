@@ -46,12 +46,12 @@ That leads to following corpus sizes:
 
 ```{r}
 
-file_scopus1<- "../../data/scopus1.csv"
-file_scopus2<-c("../../data/scopus21.csv", "../../data/scopus22.csv", "../../data/scopus23.csv")
-file_scopus3<-c("../../data/scopus31.csv", "../../data/scopus32.csv", "../../data/scopus33.csv")
+file_scopus1<- "../data/scopus1.csv"
+file_scopus2<-c("../data/scopus21.csv", "../data/scopus22.csv", "../data/scopus23.csv")
+file_scopus3<-c("../data/scopus31.csv", "../data/scopus32.csv", "../data/scopus33.csv")
 
-file_wos1 <- c("../../data/wos11.txt","../../data/wos12.txt" )
-file_wos2 <- c("../../data/wos21.txt","../../data/wos22.txt","../../data/wos23.txt", "../../data/wos24.txt","../../data/wos25.txt","../../data/wos26.txt", "../../data/wos27.txt")
+file_wos1 <- c("../data/wos11.txt","../data/wos12.txt" )
+file_wos2 <- c("../data/wos21.txt","../data/wos22.txt","../data/wos23.txt", "../data/wos24.txt","../data/wos25.txt","../data/wos26.txt", "../data/wos27.txt")
 
 M_scopus1 <- convert2df(file_scopus1, dbsource = "scopus", format = "csv")
 M_scopus2 <- convert2df(file_scopus2, dbsource = "scopus", format = "csv")
@@ -72,8 +72,44 @@ cat("Number of publications in wos2: ", nrow(M_wos2))
 
 ## Preprocessing
 
+### Genral cleaning
 ```{r}
-wos
+# Filtering out unrelated journals
+M_wos2 %<>% 
+  filter(!(JI %in% c('LANCET', 'PLOS MED.'))) %>%
+  as.data.frame()
+```
+
+### Identifying countries
+
+```{r}
+country_list <- c("Afghanistan", "Burkina Faso" ,  "Burundi" ,  "Central African Republic" ,  "Chad" ,  "Congo" ,  "Eritrea" ,  "Ethiopia" ,  "Gambia" ,  "Guinea" ,  "Guinea-Bissau" ,  "Haiti" ,  "Democratic People's Republic Korea" ,  "Liberia" ,  "Madagascar" ,  "Malawi" ,  "Mali" ,  "Mozambique" ,  "Niger" ,  "Rwanda" ,  "Sierra Leone" ,  "Somalia" ,  "South Sudan" ,  "Sudan" ,  "Syrian Arab Republic" ,  "Tajikistan" ,  "Togo" ,  "Uganda" ,  "Yemen") %>% str_to_lower()
+```
+
+
+```{r}
+countries_wos2 <- M_wos2 %>%
+  mutate(text = paste(TI, AB, DE, ID, sep = ' ') %>% str_to_lower()) %>%
+  mutate(countries = text %>% str_extract_all(paste(country_list, collapse="|")) ) %>%
+  select(UT, countries) %>%
+  unnest(countries) %>%
+  distinct(UT, countries) %>%
+  nest(countries) %>% 
+  rename(countries = data) %>%
+  rowwise() %>%
+    mutate(countries = countries %>% as.character(),
+    n_countries = countries %>% length()) %>%
+  ungroup()
+```
+
+```{r}
+M_wos2 %<>%
+  left_join(countries_wos2, by = 'UT')
+```
+
+```{r}
+M_wos2 %<>%
+  replace_na(list('n_countries' = 0))
 ```
 
 
