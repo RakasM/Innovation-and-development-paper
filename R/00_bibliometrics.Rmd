@@ -36,9 +36,7 @@ library(bibliometrix)
 library(kableExtra)
 ```
 
-# Intro
-
-hello, test
+# Data & Preprocessing
 
 ## Corpus Creation
 1. Scopus download of documents retrieved from search strings from Lorentzen (2010). Limited to `LANGUAGE = ENGLISH AND TYPE = (ARTICLE) AND SRCTYPE=(JOURNAL)`. Scopus1 is created from searching all Scopus's subject areas, and applying additional filtering on the resulting set of 6933 publications. Namely,I performed second filtering based on search string 'product OR process OR organisational innovation or institution*. This type of criteria is applied manually in Lorentzen (2010). Scopus2 and Scopus3 are generated without second filtering. Scopus2 is limited to social science subject areas, whereas Scopus3 is limited to social science subject areas, excluding Art&Humanities and Psychology. 
@@ -65,25 +63,18 @@ M_wos2 <- convert2df(file_wos2, dbsource = "wos", format = "plaintext")
 
 
 ```{r}
-
 cat("Number of publications in scopus1: ", nrow(M_scopus1))
 cat("Number of publications in scopus2: ", nrow(M_scopus2)) 
 cat("Number of publications in scopus3: ", nrow(M_scopus3))
 cat("Number of publications in wos1: ", nrow(M_wos1))
 cat("Number of publications in wos2: ", nrow(M_wos2))
-
 ```
 
+## Preprocessing
 
 ```{r}
-#glimpse(M_scopus1)
-#glimpse(M_scopus2)
-#glimpse(M_scopus3)
-#glimpse(M_wos1)
-#glimpse(M_wos2)
-
+wos
 ```
-
 
 
 # General overview of the documents in the corpus:Authors, Publications, countries, sources, and keywords {.tabset}
@@ -92,7 +83,6 @@ cat("Number of publications in wos2: ", nrow(M_wos2))
 ```{r}
 results_scopus1 <-biblioAnalysis(M_scopus1, sep=";")
 S_scopus1 <-  summary(object = results_scopus1, k =10 , pause = FALSE)
-
 ```
 
 ```{r}
