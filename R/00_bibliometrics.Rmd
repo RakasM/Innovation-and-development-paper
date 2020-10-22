@@ -40,8 +40,8 @@ library(kableExtra)
 # Data & Preprocessing
 
 ## Corpus Creation
-1. Scopus download of documents retrieved from search strings from Lorentzen (2010). Limited to `LANGUAGE = ENGLISH AND TYPE = (ARTICLE) AND SRCTYPE=(JOURNAL)`. Scopus1 is created from searching all Scopus's subject areas, and applying additional filtering on the resulting set of 5142 publications. Namely,I performed second filtering based on search string 'product OR process OR organisational innovation or institution*. This type of criteria is applied manually in Lorentzen (2010). Scopus2 and Scopus3 are generated without second filtering. Scopus2 is limited to social science subject areas, whereas Scopus3 is limited to social science subject areas, excluding Art&Humanities and Psychology.
-2. WoS download of documents retrieved from search string from Lorentzen (2010). Limited to `LANGUAGE = ENGLISH AND TYPE = (ARTICLE) AND SRCTYPE=(JOURNAL)`. For wos1 same limitations as in Scopus1.That lead to initial 6933 publications. Wos2 is limited to Social Sciences Citation Index (SSCI), and no second filtering is applied.  
+1. Scopus download of documents retrieved from search strings from Lorentzen (2010). Limited to `LANGUAGE = ENGLISH AND TYPE = (ARTICLE) AND SRCTYPE=(JOURNAL)`. Scopus1 is created from searching all Scopus's subject areas, and applying additional filtering on the resulting set of 5142 publications. Namely, I performed second filtering based on search string 'product OR process OR organisational innovation or institution*'. This type of criteria is applied manually in Lorentzen (2010). Scopus2 and Scopus3 are generated without second filtering. Scopus2 is limited to social science subject areas, whereas Scopus3 is limited to social science subject areas, excluding Art&Humanities and Psychology. Results are reported for Scopus1 and Scopus3.
+2. WoS download of documents retrieved from search string from Lorentzen (2010). Limited to `LANGUAGE = ENGLISH AND TYPE = (ARTICLE) AND SRCTYPE=(JOURNAL)`. For wos1 same limitations as in Scopus1.That lead to initial 6933 publications. Wos2 is limited to Social Sciences Citation Index (SSCI), and no second filtering is applied. Results are reported for WoS1 and WoS2.  
 
 That leads to following corpus sizes:
 
@@ -73,16 +73,12 @@ cat("Number of publications in wos2: ", nrow(M_wos2))
 
 ## Preprocessing
 
-```{r}
-M_wos2$JI
-```
-
 
 ### Genral cleaning
 ```{r}
 # Filtering out unrelated journals
 M_wos2 %<>% 
-  filter(!(JI %in% c('LANCET', 'PLOS MED.', 'P. NATL. ACAD. SCI. USA'))) %>%
+  filter(!(JI %in% c('LANCET', 'PLOS MED.'))) %>%
   as.data.frame()
 ```
 
