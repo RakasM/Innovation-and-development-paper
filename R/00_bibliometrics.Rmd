@@ -88,7 +88,9 @@ glimpse (M_wos3)
 
 ```{r}
 M_wos3 %>%
-filter(PY >= 2000 & PY <= 2009) %>%
+filter(PY >= 2010 & PY <= 2019) %>%
+filter(DT=="ARTICLE")%>%
+  
   mutate(WC_list = WC %>% str_split("; ")) %>%
   select(UT, WC_list) %>%
   unnest(WC_list) %>%
@@ -116,9 +118,6 @@ M_wos3 %>%
   mutate(JI_share = (JI_n / n()) %>% round(2) ) %>%
     arrange(desc(JI_share))
 ```
-
-
-
 
 
 
@@ -245,21 +244,45 @@ plot(x = results_wos2, k = 10, pause = FALSE)
 ```{r}
 M_wos3 <- M_wos3 %>%
   filter(PY <= 2019) %>%
+  filter(DT=="ARTICLE") %>%
   as.data.frame()
 ```
 
 ```{r}
 results_wos3<-biblioAnalysis(M_wos3, sep=";")
 options(width=100)
-S_wos3 <- summary(object = results_wos3, k = 10, pause = FALSE)
+S_wos3 <- summary(object = results_wos3, k = 20, pause = FALSE)
 ```
 
 ```{r}
 plot(x = results_wos3, k = 10, pause = FALSE)
 ```
 
+```{r}
+M_wos3_first<- M_wos3 %>%
+filter(PY >= 2000 & PY <= 2009) %>%
+  filter(DT=="ARTICLE") %>%
+  as.data.frame()
+```
 
+```{r}
+results_wos3<-biblioAnalysis(M_wos3_first, sep=";")
+options(width=100)
+S_wos3 <- summary(object = results_wos3, k = 10, pause = FALSE)
+```
 
+```{r}
+M_wos3_second<- M_wos3 %>%
+filter(PY >= 2010 & PY <= 2019) %>%
+  filter(DT=="ARTICLE") %>%
+  as.data.frame()
+```
+
+```{r}
+results_wos3<-biblioAnalysis(M_wos3_second, sep=";")
+options(width=100)
+S_wos3 <- summary(object = results_wos3, k = 10, pause = FALSE)
+```
 
 # Cited References{.tabset}
 
