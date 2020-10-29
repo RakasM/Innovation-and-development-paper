@@ -98,7 +98,7 @@ filter(DT=="ARTICLE")%>%
   mutate(n_doc = n()) %>%
   ungroup() %>%
   group_by(WC_list) %>%
-  summarise(WC_n = n(),) %>%
+  summarise(WC_n = n()) %>%
   mutate(WC_share = (WC_n / n()) %>% round(2)) %>%
   arrange(desc(WC_share))
 ```
@@ -109,14 +109,23 @@ filter(DT=="ARTICLE")%>%
 M_wos3 %>%
   mutate(WC_list = WC %>% str_split("; ")) %>%
   select(UT, JI, WC_list) %>%
-  unnest(JI) %>%
-  group_by(UT) %>%
-  mutate(n_j = n()) %>%
+  unnest(WC_list) %>%
+  count(., WC_list, sort = TRUE) %>% slice(1:10) %>% pull(WC_list)
+```
+
+
+
+```{r}
+M_wos3 %>%
+  mutate(WC_list = WC %>% str_split("; ")) %>%
+  select(UT, JI, WC_list) %>%
+  unnest(WC_list) %>%
+  filter(WC_list %in% (count(., WC_list, sort = TRUE) %>% slice(1:10) %>% pull(WC_list))) %>%
+  count(WC_list, JI, sort = TRUE) %>%
+  group_by(WC_list) %>%
+  slice(1:10) %>%
   ungroup() %>%
-  group_by(JI, WC) %>%
-  summarise(JI_n = n()) %>%
-  mutate(JI_share = (JI_n / n()) %>% round(2) ) %>%
-    arrange(desc(JI_share))
+  pivot_wider()
 ```
 
 
