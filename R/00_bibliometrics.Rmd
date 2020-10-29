@@ -97,8 +97,7 @@ countries_wos2 <- M_wos2 %>%
   nest(countries) %>% 
   rename(countries = data) %>%
   rowwise() %>%
-    mutate(countries = countries %>% as.character(),
-    n_countries = countries %>% length()) %>%
+    mutate(n_countries = countries %>% nrow()) %>%
   ungroup()
 ```
 
@@ -110,6 +109,17 @@ M_wos2 %<>%
 ```{r}
 M_wos2 %<>%
   replace_na(list('n_countries' = 0))
+```
+
+```{r}
+M_wos2 %>%
+  select(UT, countries, n_countries) %>%
+  unnest(countries) %>%
+  group_by(countries) %>%
+  summarise(n = n(),
+            n_frac = sum(1/n_countries) %>% round(1)) %>%
+  mutate(n_pct = (n / nrow(M_wos2)) %>% round(2)) %>%
+  arrange(desc(n))
 ```
 
 
