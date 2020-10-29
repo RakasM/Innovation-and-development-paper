@@ -84,19 +84,11 @@ cat("Number of publications in wos3: ", nrow(M_wos3))
 glimpse (M_wos3)
 ```
 
-```{r}
-M_wos3t<-M_wos3[order(M_wos3$SC),]
-scgroup<-tapply(M_wos3t$SC, M_wos3t$SC, function(x) seq(1, length(x),1))
-M_wos3t$scgroup<-unlist(scgroup)
-
-summarise(M_wos3t$scgroup)
-```
-
-## 
+## WoS categories
 
 ```{r}
 M_wos3 %>%
-  #filter(PY >= 2000 & PY <= 2009) %>%
+filter(PY >= 2000 & PY <= 2009) %>%
   mutate(WC_list = WC %>% str_split("; ")) %>%
   select(UT, WC_list) %>%
   unnest(WC_list) %>%
@@ -104,11 +96,9 @@ M_wos3 %>%
   mutate(n_doc = n()) %>%
   ungroup() %>%
   group_by(WC_list) %>%
-  summarise(WC_n = n(),
-            WC_n_frac = (n() / mean(n_doc)) %>% round(0) ) %>%
-  mutate(WC_share = (WC_n / n()) %>% round(2),
-         WC_share_frac = (WC_n_frac / sum(WC_n_frac)) %>% round(2) ) %>%
-    arrange(desc(WC_share))
+  summarise(WC_n = n(),) %>%
+  mutate(WC_share = (WC_n / n()) %>% round(2)) %>%
+  arrange(desc(WC_share))
 ```
 
 ## Most frequent journals per top 10 WoS subject-categories
