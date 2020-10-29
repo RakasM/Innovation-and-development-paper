@@ -124,8 +124,7 @@ M_wos3 %>%
   count(WC_list, JI, sort = TRUE) %>%
   group_by(WC_list) %>%
   slice(1:10) %>%
-  ungroup() %>%
-  pivot_wider()
+  ungroup() 
 ```
 
 
