@@ -53,7 +53,7 @@ file_scopus3<-c("../data/scopus31.csv", "../data/scopus32.csv", "../data/scopus3
 
 file_wos1 <- c("../data/wos11.txt","../data/wos12.txt" )
 file_wos2 <- c("../data/wos21.txt","../data/wos22.txt","../data/wos23.txt", "../data/wos24.txt","../data/wos25.txt","../data/wos26.txt", "../data/wos27.txt")
-file_wos3 <- c("../data/wos3_1.txt","../data/wos3_2.txt","../data/wos3_3.txt", "../data/wos3_4.txt","../data/wos3_5.txt","../data/wos3_6.txt", "../data/wos3_7.txt","../data/wos3_8.txt","../data/wos3_9.txt","../data/wos3_10.txt", "../data/wos3_11.txt","../data/wos3_12.txt","../data/wos3_13.txt", "../data/wos3_14.txt", "../data/wos3_15.txt","../data/wos3_16.txt","../data/wos3_17.txt", "../data/wos3_18.txt","../data/wos3_19.txt","../data/wos3_20.txt", "../data/wos3_21.txt", "../data/wos3_22.txt","../data/wos3_23.txt", "../data/wos3_24.txt")
+file_wos3 <- c("../data/wos3_1.txt","../data/wos3_2.txt","../data/wos3_3.txt", "../data/wos3_4.txt","../data/wos3_5.txt","../data/wos3_6.txt", "../data/wos3_7.txt","../data/wos3_8.txt","../data/wos3_9.txt","../data/wos3_10.txt", "../data/wos3_11.txt","../data/wos3_12.txt","../data/wos3_13.txt", "../data/wos3_14.txt", "../data/wos3_15.txt","../data/wos3_16.txt","../data/wos3_17.txt", "../data/wos3_18.txt","../data/wos3_19.txt","../data/wos3_20.txt", "../data/wos3_21.txt", "../data/wos3_22.txt","../data/wos3_23.txt")
 
 
 M_scopus1 <- convert2df(file_scopus1, dbsource = "scopus", format = "csv")
@@ -67,66 +67,15 @@ M_wos3 <- convert2df(file_wos3, dbsource = "wos", format = "plaintext")
 ```
 
 
-
-
 ```{r}
 cat("Number of publications in scopus1: ", nrow(M_scopus1))
 cat("Number of publications in scopus2: ", nrow(M_scopus2)) 
 cat("Number of publications in scopus3: ", nrow(M_scopus3))
 cat("Number of publications in wos1: ", nrow(M_wos1))
 cat("Number of publications in wos2: ", nrow(M_wos2))
-cat("Number of publications in wos3: ", nrow(M_wos3))
 ```
 
 ## Preprocessing
-
-```{r}
-glimpse (M_wos3)
-```
-
-## WoS categories
-
-```{r}
-M_wos3 %>%
-filter(PY >= 2010 & PY <= 2019) %>%
-filter(DT=="ARTICLE")%>%
-  
-  mutate(WC_list = WC %>% str_split("; ")) %>%
-  select(UT, WC_list) %>%
-  unnest(WC_list) %>%
-  group_by(UT) %>%
-  mutate(n_doc = n()) %>%
-  ungroup() %>%
-  group_by(WC_list) %>%
-  summarise(WC_n = n()) %>%
-  mutate(WC_share = (WC_n / n()) %>% round(2)) %>%
-  arrange(desc(WC_share))
-```
-
-## Most frequent journals per top 10 WoS subject-categories
-
-```{r}
-M_wos3 %>%
-  mutate(WC_list = WC %>% str_split("; ")) %>%
-  select(UT, JI, WC_list) %>%
-  unnest(WC_list) %>%
-  count(., WC_list, sort = TRUE) %>% slice(1:10) %>% pull(WC_list)
-```
-
-
-
-```{r}
-M_wos3 %>%
-  mutate(WC_list = WC %>% str_split("; ")) %>%
-  select(UT, JI, WC_list) %>%
-  unnest(WC_list) %>%
-  filter(WC_list %in% (count(., WC_list, sort = TRUE) %>% slice(1:10) %>% pull(WC_list))) %>%
-  count(WC_list, JI, sort = TRUE) %>%
-  group_by(WC_list) %>%
-  slice(1:10) %>%
-  ungroup() 
-```
-
 
 
 ### Genral cleaning
@@ -154,7 +103,8 @@ countries_wos2 <- M_wos2 %>%
   nest(countries) %>% 
   rename(countries = data) %>%
   rowwise() %>%
-    mutate(n_countries = countries %>% nrow()) %>%
+    mutate(countries = countries %>% as.character(),
+    n_countries = countries %>% length()) %>%
   ungroup()
 ```
 
@@ -166,17 +116,6 @@ M_wos2 %<>%
 ```{r}
 M_wos2 %<>%
   replace_na(list('n_countries' = 0))
-```
-
-```{r}
-M_wos2 %>%
-  select(UT, countries, n_countries) %>%
-  unnest(countries) %>%
-  group_by(countries) %>%
-  summarise(n = n(),
-            n_frac = sum(1/n_countries) %>% round(1)) %>%
-  mutate(n_pct = (n / nrow(M_wos2)) %>% round(2)) %>%
-  arrange(desc(n))
 ```
 
 
@@ -239,58 +178,13 @@ M_wos2 <- M_wos2 %>%
 ```{r}
 results_wos2<-biblioAnalysis(M_wos2, sep=";")
 options(width=100)
-S_wos2 <- summary(object = results_wos2$SC, k = 10, pause = FALSE)
+S_wos2 <- summary(object = results_wos2, k = 10, pause = FALSE)
 ```
 
 ```{r}
 plot(x = results_wos2, k = 10, pause = FALSE)
 ```
 
-
-## Overview WoS3
-
-```{r}
-M_wos3 <- M_wos3 %>%
-  filter(PY <= 2019) %>%
-  filter(DT=="ARTICLE") %>%
-  as.data.frame()
-```
-
-```{r}
-results_wos3<-biblioAnalysis(M_wos3, sep=";")
-options(width=100)
-S_wos3 <- summary(object = results_wos3, k = 20, pause = FALSE)
-```
-
-```{r}
-plot(x = results_wos3, k = 10, pause = FALSE)
-```
-
-```{r}
-M_wos3_first<- M_wos3 %>%
-filter(PY >= 2000 & PY <= 2009) %>%
-  filter(DT=="ARTICLE") %>%
-  as.data.frame()
-```
-
-```{r}
-results_wos3<-biblioAnalysis(M_wos3_first, sep=";")
-options(width=100)
-S_wos3 <- summary(object = results_wos3, k = 10, pause = FALSE)
-```
-
-```{r}
-M_wos3_second<- M_wos3 %>%
-filter(PY >= 2010 & PY <= 2019) %>%
-  filter(DT=="ARTICLE") %>%
-  as.data.frame()
-```
-
-```{r}
-results_wos3<-biblioAnalysis(M_wos3_second, sep=";")
-options(width=100)
-S_wos3 <- summary(object = results_wos3, k = 10, pause = FALSE)
-```
 
 # Cited References{.tabset}
 
@@ -407,38 +301,6 @@ CR_wos2$Papers[1:10,]
 
 ```
 
-## WoS3
-
-```{r}
-CR_wos3 <- citations(M_wos3, field = "article", sep = ";")
-#cbind(CR_wos2$Cited[1:10])
-
-```
-
-
-```{r}
-CR_wos3$Cited %>% as_tibble() %>% head(20) %>% 
-  kable() %>%
-  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), font_size = 8)
-```
-
-
-```{r}
-CR_wos3 <- citations(M_wos3, field = "author", sep = ";")
-cbind(CR_wos3$Cited[1:10])
-
-```
-
-```{r}
-
-CR_wos3 <- localCitations(M_wos3, sep = ";")
-CR_wos3$Authors[1:10,]
-CR_wos3$Papers[1:10,]
-
-```
-
-
-
 
 # Authors, Themes & Journals {.tabset}
 
@@ -467,14 +329,6 @@ M_wos1 %>% threeFieldsPlot()
 ```{r}
 fig.width=10
 M_wos2 %>% threeFieldsPlot()
-
-```
-
-## Wos3
-
-```{r}
-fig.width=10
-M_wos3 %>% threeFieldsPlot()
 
 ```
 
@@ -520,16 +374,6 @@ net_wos2=networkPlot(NetMatrix_wos2, normalize="association", weighted=T, n = 30
 
 ```
 
-## Wos3
-
-```{r}
-
-NetMatrix_wos3 <- biblioNetwork(M_wos3, analysis = "co-occurrences", network = "keywords", sep = ";")
-
-net_wos3=networkPlot(NetMatrix_wos3, normalize="association", weighted=T, n = 30, Title = "Keyword Co-occurrences", type = "fruchterman", size=T,edgesize = 5,labelsize=0.7)
-
-```
-
 # Thematic map based on co-word network analysis and clustering{.tabset}
 
 ## Scopus1
@@ -569,18 +413,6 @@ Map_wos2=thematicMap(M_wos2, field = "ID", n = 250, minfreq = 5,
 plot(Map_wos2$map)
 
 ```
-
-
-## WoS3
-
-```{r}
-
-Map_wos3=thematicMap(M_wos3, field = "ID", n = 250, minfreq = 5,
-  stemming = FALSE, size = 0.5, n.labels=3, repel = TRUE)
-plot(Map_wos3$map)
-
-```
-
 
 
 

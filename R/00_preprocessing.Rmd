@@ -1,0 +1,73 @@
+---
+title: 'Innovation and Development: Data preprocessings'
+author: "Marija Rakas (rakas@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_notebook:
+    code_folding: hide
+    df_print: paged
+    toc: true
+    toc_depth: 2
+    number_sections: true
+    toc_float:
+      collapsed: false
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+### Generic preamble
+rm(list=ls())
+Sys.setenv(LANG = "en") # For english language
+options(scipen = 5) # To deactivate annoying scientific number notation
+
+### Knitr options
+library(knitr) # For display of the markdown
+knitr::opts_chunk$set(warning=FALSE,
+                     message=FALSE,
+                     comment=FALSE, 
+                     fig.align="center"
+                     )
+```
+
+```{r}
+### Load standard packages
+library(tidyverse) # Collection of all the good stuff like dplyr, ggplot2 ect.
+library(magrittr) # For extra-piping operators (eg. %<>%)
+library(bibliometrix)
+```
+
+
+# Data & Preprocessing
+
+## Corpus Creation
+
+```{r}
+file_wos3 <- c("../data/wos3_1.txt","../data/wos3_2.txt","../data/wos3_3.txt", "../data/wos3_4.txt","../data/wos3_5.txt","../data/wos3_6.txt", "../data/wos3_7.txt","../data/wos3_8.txt","../data/wos3_9.txt","../data/wos3_10.txt", "../data/wos3_11.txt","../data/wos3_12.txt","../data/wos3_13.txt", "../data/wos3_14.txt", "../data/wos3_15.txt","../data/wos3_16.txt","../data/wos3_17.txt", "../data/wos3_18.txt","../data/wos3_19.txt","../data/wos3_20.txt", "../data/wos3_21.txt", "../data/wos3_22.txt","../data/wos3_23.txt")
+
+M_wos3 <- convert2df(file_wos3, dbsource = "wos", format = "plaintext")
+```
+
+
+```{r}
+cat("Number of publications in wos2: ", nrow(M_wos3))
+```
+
+
+## Preprocessing
+
+```{r}
+M_wos3 %>% glimpse()
+```
+
+```{r}
+M_wos3 %<>%
+ filter(PY <= 2019) %>%
+ filter(DT=="ARTICLE")%>%
+ mutate(WC_list = WC %>% str_split("; "))
+```
+
+```{r}
+M_wos3 %>% saveRDS("../data/corpus.rds")
+```
+
+

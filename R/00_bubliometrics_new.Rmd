@@ -1,0 +1,448 @@
+---
+title: 'Innovation and Development: Bibliometrics Analysis'
+author: "Marija Rakas (rakas@business.aau.dk)"
+date: "Updated `r format(Sys.time(), '%B %d, %Y')`"
+output:
+  html_notebook:
+    code_folding: hide
+    df_print: paged
+    toc: true
+    toc_depth: 2
+    number_sections: true
+    toc_float:
+      collapsed: false
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+### Generic preamble
+rm(list=ls())
+Sys.setenv(LANG = "en") # For english language
+options(scipen = 5) # To deactivate annoying scientific number notation
+
+### Knitr options
+library(knitr) # For display of the markdown
+knitr::opts_chunk$set(warning=FALSE,
+                     message=FALSE,
+                     comment=FALSE, 
+                     fig.align="center"
+                     )
+```
+
+```{r}
+### Load standard packages
+library(tidyverse) # Collection of all the good stuff like dplyr, ggplot2 ect.
+library(magrittr) # For extra-piping operators (eg. %<>%)
+library(bibliometrix)
+library(kableExtra)
+
+### Load topic model package
+library(tidytext)
+library(topicmodels)
+library(textstem)
+
+### Load vizualization packages
+library(igraph)
+library(ggraph)
+library(widyr)
+library(tidygraph)
+```
+
+
+# Preprocessing
+
+```{r}
+data <- readRDS("../data/corpus.rds")
+```
+
+
+## Identifying countries (WORK ON IT !!)
+```{r}
+country_list <- c("Afghanistan", "Burkina Faso" ,  "Burundi" ,  "Central African Republic" ,  "Chad" ,  "Congo" ,  "Eritrea" ,  "Ethiopia" ,  "Gambia" ,  "Guinea" ,  "Guinea-Bissau" ,  "Haiti" ,  "Democratic People's Republic Korea" ,  "Liberia" ,  "Madagascar" ,  "Malawi" ,  "Mali" ,  "Mozambique" ,  "Niger" ,  "Rwanda" ,  "Sierra Leone" ,  "Somalia" ,  "South Sudan" ,  "Sudan" ,  "Syrian Arab Republic" ,  "Tajikistan" ,  "Togo" ,  "Uganda" ,  "Yemen") %>% str_to_lower()
+```
+
+```{r}
+countries_wos3 <- data %>%
+  mutate(text = paste(TI, AB, DE, ID, sep = ' ') %>% str_to_lower()) %>%
+  mutate(countries = text %>% str_extract_all(paste(country_list, collapse="|")) ) %>%
+  select(UT, countries) %>%
+  unnest(countries) %>%
+  distinct(UT, countries) %>%
+  nest(countries) %>% 
+  rename(countries = data) %>%
+  rowwise() %>%
+    mutate(countries = countries %>% as.character(),
+    n_countries = countries %>% length()) %>%
+  ungroup()
+```
+
+```{r}
+data %<>%
+  left_join(countries_wos3, by = 'UT')
+```
+
+```{r}
+data %<>%
+  replace_na(list('n_countries' = 0))
+```
+
+# General overview of the documents in the corpus:Authors, Publications, countries, sources, and keywords {.tabset}
+
+```{r}
+results_wos3<-biblioAnalysis(data, sep=";")
+options(width=100)
+S_wos3 <- summary(object = results_wos3, k = 10, pause = FALSE)
+```
+
+```{r}
+plot(x = results_wos3, k = 10, pause = FALSE)
+```
+
+## WoS categories - Disciplinary orinetation
+### Period 2000-2019
+```{r}
+data %>%
+ select(UT, WC_list) %>%
+ unnest(WC_list) %>%
+ group_by(UT) %>%
+ mutate(n_doc = n()) %>%
+ ungroup() %>%
+ group_by(WC_list) %>%
+ summarise(WC_n = n()) %>%
+ mutate(WC_share = (WC_n / sum(WC_n)) %>% round(2)) %>%
+ arrange(desc(WC_share))%>%
+ mutate (n= sum(WC_n))  
+```
+
+### Period 2000-2009
+
+```{r}
+data %>%
+ filter(PY >= 2000 & PY <= 2009) %>%
+ select(UT, WC_list) %>%
+ unnest(WC_list) %>%
+ group_by(UT) %>%
+ mutate(n_doc = n()) %>%
+ ungroup() %>%
+ group_by(WC_list) %>%
+ summarise(WC_n = n()) %>%
+ mutate(WC_share = (WC_n / sum(WC_n)) %>% round(2)) %>%
+ arrange(desc(WC_share))%>%
+ mutate (n= sum(WC_n))  
+```
+
+### Period 2000-2009
+
+```{r}
+data %>%
+ filter(PY >= 2010 & PY <= 2019) %>%
+ select(UT, WC_list) %>%
+ unnest(WC_list) %>%
+ group_by(UT) %>%
+ mutate(n_doc = n()) %>%
+ ungroup() %>%
+ group_by(WC_list) %>%
+ summarise(WC_n = n()) %>%
+ mutate(WC_share = (WC_n / sum(WC_n)) %>% round(2)) %>%
+ arrange(desc(WC_share))%>%
+ mutate (n= sum(WC_n)) 
+```
+
+## Top journals per top 10 WoS categories
+
+### Period 2000-2019
+
+```{r}
+data %>%
+select(UT, J9, WC_list) %>%
+unnest(WC_list) %>%
+filter(WC_list %in% (count(., WC_list, sort = TRUE) %>% slice(1:10) %>% pull(WC_list))) %>%
+count(WC_list, J9, sort = TRUE) %>%
+group_by(WC_list) %>%
+slice(1:10) %>%
+ungroup()
+```
+
+### Period 2000-2009
+```{r}
+data %>%
+filter(PY >= 2000 & PY <= 2009) %>%
+select(UT, J9, WC_list) %>%
+unnest(WC_list) %>%
+filter(WC_list %in% (count(., WC_list, sort = TRUE) %>% slice(1:10) %>% pull(WC_list))) %>%
+count(WC_list, J9, sort = TRUE) %>%
+group_by(WC_list) %>%
+slice(1:10) %>%
+ungroup()
+
+```
+
+```{r}
+data %>%
+filter(PY >= 2010 & PY <= 2019) %>%
+select(UT, J9, WC_list) %>%
+unnest(WC_list) %>%
+filter(WC_list %in% (count(., WC_list, sort = TRUE) %>% slice(1:10) %>% pull(WC_list))) %>%
+count(WC_list, J9, sort = TRUE) %>%
+group_by(WC_list) %>%
+slice(1:10) %>%
+ungroup()
+```
+
+
+# Topic modeling
+
+```{r}
+# Extract text to work with
+text_tidy <- data %>%
+as_tibble() %>%
+select(UT, TI ,AB, DE, ID, PY)
+```
+
+```{r}
+abstract<-text_tidy  %>%
+select(UT, AB, PY) %>%
+unnest_tokens(word, AB, token = 'words') %>%
+filter(str_length(word) > 2 ) %>% # Remove words with less than  3 characters
+filter(!(word %in% c('study', 'research', 'paper', 'based', 'results', 'analysis', 'findings', 'elsevier', 'reserved', 'article', 'found', 'provide', 'focus', 'suggest'))) %>%
+anti_join(stop_words)
+```
+
+```{r}
+# Count the words
+abstract  %>%
+count(word,sort=TRUE)
+```
+
+```{r}
+# Adding TF-IDF weights
+abstract %<>%
+count(UT, word) %>%
+bind_tf_idf(term = word,
+            document = UT,
+            n = n) %>%
+select(-tf, -idf)
+```
+
+```{r}
+# Count the words (weighted)
+abstract  %>%
+count(word, wt = tf_idf, sort=TRUE)
+```
+
+
+```{r}
+# Co-occurence of words
+abstract_word_pairs <- abstract %>%
+pairwise_count(word, UT, sort = TRUE, upper = FALSE)
+```
+
+```{r}
+# Viz-coocurence
+set.seed(1234)
+abstract_word_pairs %>%
+  filter(n >= 1000) %>%
+  graph_from_data_frame() %>%
+  ggraph(layout = "fr") +
+  geom_edge_link(aes(edge_alpha = n, edge_width = n), edge_colour = "cyan4") +
+  geom_node_point(size = 5) +
+  geom_node_text(aes(label = name), repel = TRUE, 
+                 point.padding = unit(0.2, "lines")) +
+  theme_void()
+```
+
+```{r}
+# Alternative Viz
+set.seed(1234)
+abstract_word_pairs %>%
+filter(n >= 1000) %>%
+as_tbl_graph() %>%
+ggraph(layout = "fr") +
+geom_edge_link(aes(edge_alpha = n, edge_width = n), edge_colour = "cyan4") +
+geom_node_point(col = 'Skyblue3', aes(size = centrality_degree(weight = n))) +
+geom_node_text(aes(label = name), repel = TRUE,
+               point.padding = unit(0.2, "lines")) +
+               
+theme_void()
+```
+
+
+```{r}
+# Formatting for topic model
+text_dtm <- abstract %>%
+cast_dtm(document = UT, term = word, value = n)
+```
+
+```{r}
+# Topic modeling - LDA topic model with 8 topics
+text_lda <- text_dtm %>%
+LDA(k = 8, method = "Gibbs",
+control = list(seed = 1337))
+```
+
+```{r}
+# LDA output-beta (probability that a word occurs in a certain topic)
+lda_beta <- text_lda %>%
+tidy(matrix = "beta")
+```
+
+```{r}
+# Inspection
+lda_beta %>%
+group_by(topic) %>%
+arrange(topic, desc(beta)) %>%
+slice(1:10) %>%
+ungroup()
+```
+
+```{r}
+lda_beta %>%
+group_by(topic) %>%
+  top_n(5, beta) %>%
+  ungroup() %>%
+  arrange(topic, -beta)
+lda_beta
+```
+
+
+```{r}
+# Visualization
+lda_beta %>%
+# slice
+group_by(topic) %>%
+arrange(topic, desc(beta)) %>% slice(1:10) %>%
+ungroup() %>%
+# visualize
+mutate(term = reorder_within(term, beta, topic)) %>%
+group_by(topic, term) %>%
+arrange(desc(beta)) %>%
+ungroup() %>%
+ggplot(aes(term, beta, fill = as.factor(topic))) +
+geom_col(show.legend = FALSE) +
+coord_flip() +
+scale_x_reordered() +
+labs(title = "Top 10 terms in each LDA topic", x = NULL, y = expression(beta)) +
+facet_wrap(~ topic, ncol = 4, scales = "free")
+```
+
+```{r}
+# LDA output-gamma (association of document to a topic)
+lda_gamma <- text_lda %>%
+tidy(matrix = "gamma")
+```
+
+```{r}
+# Inspection of documents by topics
+lda_gamma %>%
+group_by(topic) %>%
+arrange(desc(gamma)) %>%
+slice(1:10)  %>%
+ungroup() %>%
+left_join(data %>% select(UT, TI) %>% mutate(UT = UT %>% as.character()), by = c('document' = 'UT'))
+```
+
+```{r}
+# Distribution of probabilities for all topics
+ggplot(lda_gamma, aes(gamma)) +
+geom_histogram(alpha = 0.8) +
+scale_y_log10() +
+labs(title = "Distribution of probabilities for all topics",
+y = "Number of documents", x = expression(gamma))
+```
+
+```{r}
+# Distribution of probabilities for each topics
+ggplot(lda_gamma, aes(gamma, fill = as.factor(topic))) +
+geom_histogram(alpha = 0.8, show.legend = FALSE) +
+facet_wrap(~ topic, ncol = 4) +
+scale_y_log10() +
+labs(title = "Distribution of probability for each topic",
+y = "Number of documents", x = expression(gamma))
+```
+
+```{r}
+# Join with other data
+topic_cat <- lda_gamma %>%
+mutate(topic = topic %>% factor()) %>%
+left_join(data %>% select(UT, PY, WC_list, J9), by = c('document' = 'UT'))
+```
+
+```{r}
+# Topics by WoS categories
+topic_cat %>%
+unnest(WC_list) %>%
+filter(WC_list %in% (count(., WC_list, sort = TRUE) %>% slice(1:10) %>% pull(WC_list))) %>%
+group_by(document, topic) %>%
+mutate(gamma_frac = gamma / n()) %>%
+ungroup() %>%
+group_by(topic, WC_list) %>%
+summarise(gamma = mean(gamma), gamma_frac = mean(gamma)) %>%
+# plotting
+ggplot(aes(x = topic, y = gamma_frac)) +
+geom_col(aes(fill = topic)) +
+coord_flip() +
+facet_wrap( ~ WC_list, ncol = 5)
+```
+
+```{r}
+# Topics by years
+topic_cat %>%
+group_by(document, topic) %>%
+mutate(gamma_frac = gamma / n()) %>%
+ungroup() %>%
+group_by(topic, PY) %>%
+summarise(gamma = mean(gamma), gamma_frac = mean(gamma)) %>%
+group_by(PY) %>%
+mutate(gamma = gamma / sum(gamma),
+gamma_frac = gamma_frac / sum(gamma_frac)) %>%
+ungroup() %>%
+# plotting
+ggplot(aes(x = PY, y = gamma_frac, fill = topic, col = topic)) +
+geom_line()
+# + geom_area(position = 'stack')
+
+```
+
+```{r}
+# Topics by period
+topic_cat %>%
+  group_by(document, topic) %>%
+  mutate(gamma_frac = gamma / n()) %>%
+  ungroup() %>%
+  mutate(PY = PY >= 2010) %>%
+  group_by(topic, PY) %>%
+  summarise(gamma = mean(gamma), gamma_frac = mean(gamma)) %>%
+  ungroup() %>%
+  group_by(PY) %>%
+  mutate(gamma = gamma / sum(gamma), gamma_frac = gamma_frac / sum(gamma_frac)) %>%
+  ungroup() %>%
+  # plotting
+  ggplot(aes(x = topic, y = gamma_frac, fill = topic, col = topic)) +
+  geom_col() +
+  facet_wrap( ~ (PY))
+  # ggplot(aes(x = PY, y = gamma_frac, fill = topic)) + geom_area(position = 'stack')
+```
+
+```{r}
+# Topics by Wos categories and years
+topic_cat %>%
+ unnest(WC_list) %>%
+ filter(WC_list %in% (count(., WC_list, sort = TRUE) %>% slice(1:10) %>% pull(WC_list))) %>%
+ group_by(topic, PY, WC_list) %>%
+ summarise(gamma = mean(gamma), gamma_frac = mean(gamma)) %>%
+ ungroup() %>%
+ # plotting
+ggplot(aes(x = PY, y = gamma_frac, fill = topic, col = topic)) +
+geom_area(position = 'stack') +
+facet_wrap( ~ WC_list)
+```
+
+```{r}
+topic_cat %>%
+ group_by(topic, J9) %>%
+  summarise(gamma = mean(gamma), gamma_frac = mean(gamma)) %>%
+  arrange(desc(gamma)) %>%
+  slice(1:20)  %>%
+  ungroup()
+```
+
